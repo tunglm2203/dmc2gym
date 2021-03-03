@@ -4,22 +4,20 @@ A lightweight wrapper around the DeepMind Control Suite that provides the standa
 * Setting ```from_pixels=True``` converts proprioceptive observations into image-based. In additional, you can choose the image dimensions, by setting ```height``` and ```width```.
 * Action space normalization bound each action's coordinate into the ```[-1, 1]``` range.
 * Setting ```frame_skip``` argument lets to perform action repeat.
+* Download the [DAVIS 2017
+  dataset](https://davischallenge.org/davis2017/code.html) and unzip to folder `./dmc2gym/videos/`.
 
 
 ### Instalation
+Go to dmc2gym directory then type the command:
 ```
-pip install git+git://github.com/denisyarats/dmc2gym.git
+pip install -e .
+```
+or
+```
+python setup.py install
 ```
 
 ### Usage
-```python
-import dmc2gym
 
-env = dmc2gym.make(domain_name='point_mass', task_name='easy', seed=1)
-
-done = False
-obs = env.reset()
-while not done:
-  action = env.action_space.sample()
-  obs, reward, done, info = env.step(action)
-```
+See `test_env.py` file.
