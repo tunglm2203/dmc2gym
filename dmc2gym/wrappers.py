@@ -3,6 +3,16 @@ from dmc2gym.distracting_control import suite
 from dm_env import specs
 import numpy as np
 
+DOMAIN_KEY_OBS = dict(
+    walker_walk=['orientations', 'height'],
+    walker_stand=['orientations', 'height'],
+    walker_run=['orientations', 'height'],
+    cheetah_run=['position'],
+    cartpole_swingup=['position'],
+    ball_in_cup_catch=['position'],
+    reacher_easy=['position', 'to_target'],
+    finger_spin=['position', 'touch']
+)
 
 def _spec_to_box(spec):
     def extract_min_max(s):
@@ -25,6 +35,29 @@ def _spec_to_box(spec):
     assert low.shape == high.shape
     return spaces.Box(low, high, dtype=np.float32)
 
+
+def _spec_to_box_for_obs_v1(spec, domain=None, task=None):
+    def extract_min_max(s):
+        assert s.dtype == np.float64 or s.dtype == np.float32
+        dim = np.int(np.prod(s.shape))
+        if type(s) == specs.Array:
+            bound = np.inf * np.ones(dim, dtype=np.float32)
+            return -bound, bound
+        elif type(s) == specs.BoundedArray:
+            zeros = np.zeros(dim, dtype=np.float32)
+            return s.minimum + zeros, s.maximum + zeros
+
+    mins, maxs = [], []
+    for s in spec:
+        if s.name not in DOMAIN_KEY_OBS[domain + '_' + task]:
+            continue
+        mn, mx = extract_min_max(s)
+        mins.append(mn)
+        maxs.append(mx)
+    low = np.concatenate(mins, axis=0)
+    high = np.concatenate(maxs, axis=0)
+    assert low.shape == high.shape
+    return spaces.Box(low, high, dtype=np.float32)
 
 def _flatten_obs(obs):
     obs_pieces = []
@@ -68,6 +101,8 @@ class DMCWrapper(core.Env):
         self._channels_first = channels_first
 
         # create task
+        self.domain_name = domain_name
+        self.task_name = task_name
         self._env = suite.load(
             domain_name=domain_name,
             task_name=task_name,
@@ -103,12 +138,12 @@ class DMCWrapper(core.Env):
                 low=0, high=255, shape=shape, dtype=np.uint8
             )
         else:
-            self._observation_space = _spec_to_box(
-                self._env.observation_spec().values()
+            self._observation_space = _spec_to_box_for_obs_v1(
+                self._env.observation_spec().values(), domain_name, task_name
             )
             
-        self._state_space = _spec_to_box(
-                self._env.observation_spec().values()
+        self._state_space = _spec_to_box_for_obs_v1(
+                self._env.observation_spec().values(), domain_name, task_name
         )
         
         self.current_state = None
@@ -129,7 +164,10 @@ class DMCWrapper(core.Env):
             if self._channels_first:
                 obs = obs.transpose(2, 0, 1).copy()
         else:
-            obs = _flatten_obs(time_step.observation)
+            time_step_observation = filter_obs(time_step.observation,
+                                               DOMAIN_KEY_OBS[self.domain_name + '_' + self.task_name])
+            obs = _flatten_obs(time_step_observation)
+            # obs = _flatten_obs(time_step.observation)
         return obs
 
     def _convert_action(self, action):
@@ -172,14 +210,20 @@ class DMCWrapper(core.Env):
             if done:
                 break
         obs = self._get_obs(time_step)
-        self.current_state = _flatten_obs(time_step.observation)
+        time_step_observation = filter_obs(time_step.observation, DOMAIN_KEY_OBS[self.domain_name + '_' + self.task_name])
+        self.current_state = _flatten_obs(time_step_observation)
+        # obs = self._get_obs(time_step)
+        # self.current_state = _flatten_obs(time_step.observation)
         extra['discount'] = time_step.discount
         return obs, reward, done, extra
 
     def reset(self):
         time_step = self._env.reset()
-        self.current_state = _flatten_obs(time_step.observation)
+        time_step_observation = filter_obs(time_step.observation, DOMAIN_KEY_OBS[self.domain_name + '_' + self.task_name])
+        self.current_state = _flatten_obs(time_step_observation)
         obs = self._get_obs(time_step)
+        # self.current_state = _flatten_obs(time_step.observation)
+        # obs = self._get_obs(time_step)
         return obs
 
     def render(self, mode='rgb_array', height=None, width=None, camera_id=0):
@@ -190,3 +234,9 @@ class DMCWrapper(core.Env):
         return self._env.physics.render(
             height=height, width=width, camera_id=camera_id
         )
+
+def filter_obs(obs, key2keep=[]):
+    for k in obs.keys():
+        if k not in key2keep:
+            obs.pop(k)
+    return obs
