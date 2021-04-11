@@ -27,7 +27,7 @@ def make(
         default_camera=False,
         default_color=False,
 ):
-    env_id = 'dmc_%s_%s_%s-v1' % (domain_name, task_name, seed)
+    env_id = 'dmc_%s_%s_%s_%s-v1' % (domain_name, task_name, background_dataset_videos, seed)
 
     if from_pixels:
         assert not visualize_reward, 'cannot use visualize reward when learning from pixels'
