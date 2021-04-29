@@ -22,7 +22,8 @@ used in the original paper. Each distraction wrapper can be used independently
 though.
 """
 try:
-    from dm_control import suite  # pylint: disable=g-import-not-at-top
+    # from dm_control import suite  # pylint: disable=g-import-not-at-top
+    import dmc2gym.local_dmcontrol as suite  # pylint: disable=g-import-not-at-top
     from dm_control.suite.wrappers import pixels  # pylint: disable=g-import-not-at-top
 except ImportError:
     suite = None
