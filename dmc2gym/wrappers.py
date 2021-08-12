@@ -187,7 +187,8 @@ class DMCWrapper(core.Env):
         extra['skipped_obses'] = skipped_obses
         extra['skipped_acts'] = skipped_acts
         extra['intermediate_rewards'] = intermediate_rewards
-        return obs, reward, done, extra
+        extra_info = extra.copy()
+        return obs, reward, done, extra_info
 
     def reset(self):
         time_step = self._env.reset()
