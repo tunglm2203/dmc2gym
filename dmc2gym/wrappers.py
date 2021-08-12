@@ -166,15 +166,18 @@ class DMCWrapper(core.Env):
         extra = {'internal_state': self._env.physics.get_state().copy()}
 
         skipped_obses, skipped_acts = [], []
+        intermediate_rewards = []
         for i in range(self._frame_skip):
             time_step = self._env.step(action)
             reward += time_step.reward or 0
             done = time_step.last()
 
+            # Don't save last frame
             if i < self._frame_skip - 1:
                 _obs = self._get_obs(time_step)
                 skipped_obses.append(_obs)
                 skipped_acts.append(action)
+                intermediate_rewards.append(time_step.reward or 0)
 
             if done:
                 break
@@ -183,6 +186,7 @@ class DMCWrapper(core.Env):
         extra['discount'] = time_step.discount
         extra['skipped_obses'] = skipped_obses
         extra['skipped_acts'] = skipped_acts
+        extra['intermediate_rewards'] = intermediate_rewards
         return obs, reward, done, extra
 
     def reset(self):
