@@ -32,7 +32,8 @@ SUITE = containers.TaggedTasks()
 
 def get_model_and_assets():
   """Returns a tuple containing the model XML string and a dict of assets."""
-  return common.read_model('point_mass.xml'), common.ASSETS
+  # return common.read_model('point_mass.xml'), common.ASSETS
+  return common.read_model('point_mass_maze_hidden_target.xml'), common.ASSETS
 
 
 @SUITE.add('benchmarking', 'easy')
@@ -94,17 +95,40 @@ class PointMass(base.Task):
       physics: An instance of `mujoco.Physics`.
     """
     randomizers.randomize_limited_and_rotational_joints(physics, self.random)
-    if self._randomize_gains:
-      dir1 = self.random.randn(2)
-      dir1 /= np.linalg.norm(dir1)
-      # Find another actuation direction that is not 'too parallel' to dir1.
-      parallel = True
-      while parallel:
-        dir2 = self.random.randn(2)
-        dir2 /= np.linalg.norm(dir2)
-        parallel = abs(np.dot(dir1, dir2)) > 0.9
-      physics.model.wrap_prm[[0, 1]] = dir1
-      physics.model.wrap_prm[[2, 3]] = dir2
+    # if self._randomize_gains:
+    #   dir1 = self.random.randn(2)
+    #   dir1 /= np.linalg.norm(dir1)
+    #   # Find another actuation direction that is not 'too parallel' to dir1.
+    #   parallel = True
+    #   while parallel:
+    #     dir2 = self.random.randn(2)
+    #     dir2 /= np.linalg.norm(dir2)
+    #     parallel = abs(np.dot(dir1, dir2)) > 0.9
+    #   physics.model.wrap_prm[[0, 1]] = dir1
+    #   physics.model.wrap_prm[[2, 3]] = dir2
+
+    # Random among 4 regions
+    # |__top left____|_top right____|
+    # |__bottom left_|_bottom right_|
+    #   0 1
+    #   2 3
+    region = np.random.randint(4)
+
+    min_pos = 0.11
+    max_pos = 0.29
+    if region == 0:
+      physics.data.qpos[0] = np.random.uniform(-max_pos, -min_pos)
+      physics.data.qpos[1] = np.random.uniform(min_pos, max_pos)
+    elif region == 1:
+      physics.data.qpos[0] = np.random.uniform(min_pos, max_pos)
+      physics.data.qpos[1] = np.random.uniform(min_pos, max_pos)
+    elif region == 2:
+      physics.data.qpos[0] = np.random.uniform(-max_pos, -min_pos)
+      physics.data.qpos[1] = np.random.uniform(-max_pos, -min_pos)
+    elif region == 3:
+      physics.data.qpos[0] = np.random.uniform(min_pos, max_pos)
+      physics.data.qpos[1] = np.random.uniform(-max_pos, -min_pos)
+
     super().initialize_episode(physics)
 
   def get_observation(self, physics):
@@ -116,11 +140,12 @@ class PointMass(base.Task):
 
   def get_reward(self, physics):
     """Returns a reward to the agent."""
-    target_size = physics.named.model.geom_size['target', 0]
-    near_target = rewards.tolerance(physics.mass_to_target_dist(),
-                                    bounds=(0, target_size), margin=target_size)
-    control_reward = rewards.tolerance(physics.control(), margin=1,
-                                       value_at_margin=0,
-                                       sigmoid='quadratic').mean()
-    small_control = (control_reward + 4) / 5
-    return near_target * small_control
+    # target_size = physics.named.model.geom_size['target', 0]
+    # near_target = rewards.tolerance(physics.mass_to_target_dist(),
+    #                                 bounds=(0, target_size), margin=target_size)
+    # control_reward = rewards.tolerance(physics.control(), margin=1,
+    #                                    value_at_margin=0,
+    #                                    sigmoid='quadratic').mean()
+    # small_control = (control_reward + 4) / 5
+    # return near_target * small_control
+    return 0
