@@ -118,7 +118,13 @@ class PointMass(base.Task):
     if self.region is None:
       region = np.random.randint(4)
     else:
-      region = self.region
+      if isinstance(self.region, list):
+        region = np.random.choice(self.region)
+      elif isinstance(self.region, int):
+        region = self.region
+      else:
+        print('Do not know region: ', self.region)
+        region = np.random.randint(4)
 
     min_pos = 0.11 if self.min_pos is None else self.min_pos
     max_pos = 0.29 if self.max_pos is None else self.max_pos
