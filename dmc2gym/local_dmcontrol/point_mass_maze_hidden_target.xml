@@ -27,8 +27,9 @@
     <geom name="wall_neg_y" type="plane" pos="0 .3 .02" zaxis="0 -1 0"  size=".3 .02 .02" material="decoration"/>
       
     
-    <geom name="maze_y" class="wall" pos="0 .0 .02" zaxis="0 1 0"  size=".18 .02 .02"/>
-    <geom name="maze_x" class="wall" pos="0 .0 .02" zaxis="1 0 0"  size=".02 .18 .02"/>
+<!--    <geom name="maze_y" class="wall" pos="0 .0 .02" zaxis="0 1 0"  size=".18 .02 .02"/>-->
+<!--    <geom name="maze_x" class="wall" pos="0 .0 .02" zaxis="1 0 0"  size=".02 .18 .02"/>-->
+    <geom name="maze" class="wall" pos="0 .0 .02" zaxis="0 0 1"  size=".09 .09 .02"/>
 
     <body name="pointmass" pos="0 0 .01">
       <camera name="cam0" pos="0 -0.3 0.3" xyaxes="1 0 0 0 0.7 0.7"/>

@@ -82,6 +82,7 @@ class PointMass(base.Task):
         automatically (default).
     """
     self._randomize_gains = randomize_gains
+    self.region = None
     super().__init__(random=random)
 
   def initialize_episode(self, physics):
@@ -112,7 +113,10 @@ class PointMass(base.Task):
     # |__bottom left_|_bottom right_|
     #   0 1
     #   2 3
-    region = np.random.randint(4)
+    if self.region is None:
+      region = np.random.randint(4)
+    else:
+      region = self.region
 
     min_pos = 0.11
     max_pos = 0.29
@@ -128,6 +132,9 @@ class PointMass(base.Task):
     elif region == 3:
       physics.data.qpos[0] = np.random.uniform(min_pos, max_pos)
       physics.data.qpos[1] = np.random.uniform(-max_pos, -min_pos)
+
+    # physics.data.qpos[0] = 0.03
+    # physics.data.qpos[1] = -0.03
 
     super().initialize_episode(physics)
 
